@@ -1,5 +1,6 @@
 // index.html
 import { useState } from 'react';
+import BasicTitle from '../components/Basic.js';
 function Header({ title }) {
   return <h1>{title ? title : 'Default title'}</h1>;
 }
@@ -16,6 +17,7 @@ function HomePage() {
   return (
     <div>
       <Header title="Develop. Preview. Ship. 🚀" />
+      <BasicTitle />
       <ul>
         {names.map((name) => (
           <li key={name}>{name}</li>
