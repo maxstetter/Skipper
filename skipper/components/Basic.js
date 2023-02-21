@@ -1,9 +1,12 @@
+import useAuth from "@/hooks/useAuth";
 import React from "react";
 
-function BasicTitle(){
+function BasicTitle({ code }){
+    const accessToken = useAuth(code);
     return (
         <div>
-            <h1>Skipper</h1>
+            <h1>{code}</h1>
+            <h1>poopy butthole</h1>
         </div>
     )
 }
