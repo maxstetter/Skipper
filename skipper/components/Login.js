@@ -10,16 +10,21 @@ function Login(){
     const [token, setToken] = useState("");
 
     useEffect(() => {
-        let urlParams = new URLSearchParams(window.location.hash.replace('#','?'));
-        let token = urlParams.get('access_token');
+        if(!token) {
+            let urlParams = new URLSearchParams(window.location.hash.replace('#','?'));
+            let token = urlParams.get('access_token');
 
+            window.localStorage.setItem('token', token);
+            console.log('token: ', token);
+        }
         setToken(token);
+        //console.log('token: ', token)
     }, [])
 
     return (
         <div>
             <h1>Skipper</h1>
-            <a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}`}>login</a>
+            <a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}`}>Host</a>
         </div>
     )
 }
