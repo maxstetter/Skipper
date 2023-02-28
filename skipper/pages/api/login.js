@@ -1,5 +1,18 @@
 const SpotifyWebApi = require('spotify-web-api-node');
 
+/* 
+FUNCTIONALITY:
+handles requests at '/login' when users decide to host a session and
+thus need to login with their spotify account. 
+
+HOW:
+Uses SpotifyWebApi node package to make a request to spotify api at clientID
+and Secret bt using the code given from login.
+Returns tokens for other spotify api calls.
+*/
+ 
+
+//TODO: remove secret from github repo.
 export default function handler(req, res) {
     const code = req.body.code;
     const spotifyApi = new SpotifyWebApi({
@@ -15,7 +28,8 @@ export default function handler(req, res) {
             refreshToken: data.body.refresh_token,
             expiresIn: data.body.expires_in,
         })
-    }).catch(() => {
+    }).catch(err => {
+        console.log('Error: ', err);
         res.status(400);
     })
 }

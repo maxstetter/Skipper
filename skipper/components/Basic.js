@@ -3,6 +3,9 @@ import React from "react";
 
 function BasicTitle({ code }){
     const accessToken = useAuth(code);
+
+    console.log('accessToken: ',accessToken);
+
     return (
         <div>
             <h1>{code}</h1>
