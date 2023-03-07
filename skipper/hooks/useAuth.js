@@ -11,7 +11,7 @@ export default function useAuth(code) {
             code,
         })
         .then(res => {
-            console.log('data: ', res.data);
+            //console.log('data: ', res.data);
             setAccessToken(res.data.accessToken);
             setRefreshToken(res.data.refreshToken);
             setExpiresIn(res.data.expiresIn);
@@ -22,5 +22,24 @@ export default function useAuth(code) {
         })
     }, [code])
 
+    useEffect(() => {
+        if (!refreshToken || !expiresIn) return;
+
+        const interval = setInterval(() => {
+            axios.post('http://localhost:3000/api/refresh', {
+                refreshToken,
+            })
+            .then(res => {
+                //console.log('data: ', res.data);
+                setAccessToken(res.data.accessToken);
+                setExpiresIn(res.data.expiresIn);
+            })
+            .catch(() => {
+                window.location = "/";
+            })
+        }, (expiresIn - 60) * 1000)
+        return () => clearInterval(interval);
+    },[refreshToken, expiresIn])
+    
     return accessToken;
 }

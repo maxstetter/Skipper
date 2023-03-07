@@ -14,22 +14,29 @@ Returns tokens for other spotify api calls.
 
 //TODO: remove secret from github repo.
 export default function handler(req, res) {
-    const code = req.body.code;
+    const refreshToken = req.body.refreshToken;
     const spotifyApi = new SpotifyWebApi({
         redirectUri: 'http://localhost:3000',
         clientId: '8600f707689e46bd9426b2afd625d379',
         clientSecret: 'f30da561b7894a9abc84375defae71eb',
+        refreshToken,
     })
-
-    spotifyApi.authorizationCodeGrant(code)
+    
+    // clientId, clientSecret and refreshToken has been set on the api object previous to this call.
+    spotifyApi.refreshAccessToken()
     .then(data => {
+        console.log('The access token has been refreshed!');
+        //console.log('refreshed: ', data.body);
         res.json({
-            accessToken: data.body.access_token,
-            refreshToken: data.body.refresh_token,
-            expiresIn: data.body.expires_in,
+            accessToken: data.body.accessToken,
+            expiresIn: data.body.expiresIn,
         })
+
+        // Save the access token so that it's used in future calls
+        spotifyApi.setAccessToken(data.body['access_token']);
     }).catch(err => {
-        //console.log('Error: ', err);
+        console.log('Could not refresh access token', err);
         res.status(400);
     })
+
 }
