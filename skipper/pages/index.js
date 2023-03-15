@@ -27,28 +27,62 @@ function HomePage() {
     useEffect(() => {
       if (!accessToken) return
       spotifyApi.setAccessToken(accessToken);
-      spotifyApi.getMyTopArtists().then(res => {
-        console.log('kkk', res)
-      })
     }, [accessToken])
 
+    const [search, setSearch] = useState("")
+    const [searchResults, setSearchResults] = useState([])
+
+    useEffect(() => {
+      if(!search) return setSearchResults([])
+      if(!accessToken) return
+
+      let cancel = false
+      spotifyApi.searchTracks(search).then(res => {
+        setSearchResults(res.body.tracks.items.map(track => {
+          if (cancel) return 
+          const smallestAlbumImage = track.album.images.reduce((smallest, image) => {
+            if (image.height < smallest.height) return image
+            return smallest
+          }, track.album.images[0])
+          return {
+            artist: track.artists[0].name,
+            title: track.name,
+            uri: track.uri,
+            albumUrl: smallestAlbumImage.url,
+          }
+        }))
+      })
+      
+      return () => cancel = true
+    },[search, accessToken])
 
   
   return (
     <div className='Content'>
-      <div>
-        insert retard
-        <BasicTitle code={code}></BasicTitle>
+      <div className='container'>
+        <form>
+          <input 
+            type="text"
+            placeholder='Search Songs/Artists'
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </form>
+        <div className="flex-grow-1 my-2" style={{overflowY: "auto"}}>
+          Songs
+          {searchResults.map( track => (
+            <TrackSearchResult track={track} key={track.uri} />
+          ))}
+        </div>
       </div>
       <div>
         <button><a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`}>Host a session</a></button>
         <br/>
         <button>Join</button>
       </div>
-      <div>
-      </div>
     </div>
   );
 }
+        //<BasicTitle code={code}></BasicTitle>
 
 export default HomePage
