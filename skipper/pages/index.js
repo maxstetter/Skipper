@@ -5,6 +5,8 @@ import BasicTitle from '../components/Basic';
 import { useSearchParams } from 'next/navigation';
 import SpotifyWebApi from 'spotify-web-api-node';
 import useAuth from '@/hooks/useAuth';
+import TrackSearchResult from '@/components/TrackSearchResult';
+import Player from '@/components/Player';
 
 const spotifyApi = new SpotifyWebApi({
   clientId: '8600f707689e46bd9426b2afd625d379',
@@ -15,7 +17,7 @@ function HomePage() {
     const REDIRECT_URI = 'http://localhost:3000';
     const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
     const RESPONSE_TYPE = 'code';
-    const SCOPE = 'user-top-read';
+    const SCOPE = 'streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state';
     
     //Workaround because nextjs doesnt support window
     const searchParams = useSearchParams();
@@ -56,12 +58,19 @@ function HomePage() {
       return () => cancel = true
     },[search, accessToken])
 
+    const [playingTrack, setPlayingTrack] = useState()
+
+    function chooseTrack(track) {
+      setPlayingTrack(track)
+      setSearch('')
+    }
+
   
   return (
     <div className='Content'>
       <div className='container'>
-        <form>
-          <input 
+        <form className='searchcontainer'>
+          <input className='searchbar'
             type="text"
             placeholder='Search Songs/Artists'
             value={search}
@@ -69,9 +78,8 @@ function HomePage() {
           />
         </form>
         <div className="flex-grow-1 my-2" style={{overflowY: "auto"}}>
-          Songs
           {searchResults.map( track => (
-            <TrackSearchResult track={track} key={track.uri} />
+            <TrackSearchResult track={track} key={track.uri} chooseTrack={chooseTrack} />
           ))}
         </div>
       </div>
@@ -80,6 +88,7 @@ function HomePage() {
         <br/>
         <button>Join</button>
       </div>
+      <div><Player accessToken={accessToken} trackUri={playingTrack?.uri}/></div>
     </div>
   );
 }
