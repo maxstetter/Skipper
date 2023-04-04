@@ -1,36 +1,40 @@
 // index.html
 
-import { useState, useEffect } from 'react';
-import BasicTitle from '../components/Basic';
+import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import io from 'socket.io-client';
 import SpotifyWebApi from 'spotify-web-api-node';
 import useAuth from '@/hooks/useAuth';
 import TrackSearchResult from '@/components/TrackSearchResult';
 import Player from '@/components/Player';
+import Login from '@/components/Login';
+
+let socket
 
 const spotifyApi = new SpotifyWebApi({
   clientId: '8600f707689e46bd9426b2afd625d379',
 })
 
 function HomePage() {
-    const CLIENT_ID = '8600f707689e46bd9426b2afd625d379';
-    const REDIRECT_URI = 'http://localhost:3000';
-    const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
-    const RESPONSE_TYPE = 'code';
-    const SCOPE = 'streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state';
     
-    //Workaround because nextjs doesnt support window
+    // Token stuff //
+    
     const searchParams = useSearchParams();
     const code = searchParams.get("code");
-    //console.log('code: ', code);
-
+ 
     const accessToken = useAuth(code);
 
     useEffect(() => {
       if (!accessToken) return
       spotifyApi.setAccessToken(accessToken);
+      console.log('playlists: ', spotifyApi.getUserPlaylists(spotifyApi.getMe().id))
+      console.log('user info: ', spotifyApi.getMe())
+      console.log('saved tracks: ', spotifyApi.getMySavedTracks({ limit: 50}))
     }, [accessToken])
 
+
+    // Search stuff //
+    
     const [search, setSearch] = useState("")
     const [searchResults, setSearchResults] = useState([])
 
@@ -58,6 +62,9 @@ function HomePage() {
       return () => cancel = true
     },[search, accessToken])
 
+
+    // Player stuff //
+
     const [playingTrack, setPlayingTrack] = useState()
 
     function chooseTrack(track) {
@@ -65,7 +72,62 @@ function HomePage() {
       setSearch('')
     }
 
-  
+
+    // Socket Stuff //
+
+    const [test, setTester] = useState('being');
+
+    useEffect(() => {
+      socketInitializer();
+    }, [])
+
+    const socketInitializer = async () => {
+      await fetch('/api/socket');
+
+      socket = io();
+
+      socket.on('connect', () => {
+        console.log('socket connected')
+      })
+
+      socket.on('receiveMessage', (data) => {
+        console.log('data: ', data);
+        setTester(data.message);
+      })
+    }
+
+    const sendMessage = async () => {
+      let message = 'asdfasdfasdf'
+      socket.emit('sendMessage', { message, room });
+    };
+
+
+
+    // Vote stuff //
+    
+    const [voteCount, setVoteCount] = useState(0)
+    const [voteThreshold, setVoteThreshold] = useState(5) // set vote threshold here
+
+
+    useEffect(() => {
+      if (voteCount > voteThreshold) {
+        setVoteCount(0)
+        spotifyApi.skipToNext();
+      } 
+    },[voteCount])
+
+
+    // Room Stuff //
+
+    const [room, setRoom] = useState('');
+
+    const joinRoom = () => {
+      if (room !== '') {
+        socket.emit('joinRoom', room);
+      }
+    };
+
+
   return (
     <div className='Content'>
       <div className='container'>
@@ -79,19 +141,32 @@ function HomePage() {
         </form>
         <div className="flex-grow-1 my-2" style={{overflowY: "auto"}}>
           {searchResults.map( track => (
-            <TrackSearchResult track={track} key={track.uri} chooseTrack={chooseTrack} />
+            <TrackSearchResult track={track} key={track?.uri} chooseTrack={chooseTrack} />
           ))}
         </div>
       </div>
       <div>
-        <button><a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`}>Host a session</a></button>
+        <Login />
+        <button onClick={() => setVoteCount(voteCount + 1)}>Skip</button>
+        {voteCount}
         <br/>
-        <button>Join</button>
+        <div>
+          <button onClick={sendMessage}> send message</button>
+          {test}
+          <input
+            placeholder='Room ID...'
+            onChange={(event) => {
+              setRoom(event.target.value);
+            }}
+          />
+          <button onClick={joinRoom}>Join</button>
+        </div>
       </div>
       <div><Player accessToken={accessToken} trackUri={playingTrack?.uri}/></div>
     </div>
   );
 }
         //<BasicTitle code={code}></BasicTitle>
+        //<button><a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`}>Host</a></button>
 
 export default HomePage

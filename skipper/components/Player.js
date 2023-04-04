@@ -14,9 +14,10 @@ function Player({ accessToken, trackUri}) {
     showSaveIcon
     callback={state => {
         if(!state.isPlaying) setPlay(false)
+        console.log('nextTracks: ', state.nextTracks)
     }}
     play={true}
-    uris={trackUri ? [trackUri] : []}
+    uris={trackUri ? [trackUri] : ["spotify:playlist:7lMK6wzrVhd98gizttAlaK"]}
     />
 }
 
