@@ -128,44 +128,90 @@ function HomePage() {
     };
 
 
+    // Host or Join stuff //
+    const [haveChosen, setChosen] = useState(false);
+    const [amHost, setHost] = useState(false);
+    const [amJoin, setJoin] = useState(false);
+
+
+
   return (
     <div className='Content'>
-      <div className='container'>
-        <form className='searchcontainer'>
-          <input className='searchbar'
-            type="text"
-            placeholder='Search Songs/Artists'
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </form>
-        <div className="flex-grow-1 my-2" style={{overflowY: "auto"}}>
-          {searchResults.map( track => (
-            <TrackSearchResult track={track} key={track?.uri} chooseTrack={chooseTrack} />
-          ))}
-        </div>
-      </div>
+        {accessToken ? 
+          <div className='container'>
+            <form className='searchcontainer'>
+              <input className='searchbar'
+                type="text"
+                placeholder='Search Songs/Artists'
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </form>
+            <div className="flex-grow-1 my-2" style={{overflowY: "auto"}}>
+              {searchResults.map( track => (
+                <TrackSearchResult track={track} key={track?.uri} chooseTrack={chooseTrack} />
+              ))}
+            </div>
+          </div>
+          :
+          ''
+        }
       <div>
-        <Login />
-        <button onClick={() => setVoteCount(voteCount + 1)}>Skip</button>
-        {voteCount}
-        <br/>
-        <div>
-          <button onClick={sendMessage}> send message</button>
-          {test}
-          <input
-            placeholder='Room ID...'
-            onChange={(event) => {
-              setRoom(event.target.value);
-            }}
-          />
-          <button onClick={joinRoom}>Join</button>
-        </div>
+        {amJoin ? 
+          <div>
+            <button onClick={joinRoom}>Join a Room</button>
+            <input
+              placeholder='Room ID...'
+              onChange={(event) => {
+                setRoom(event.target.value);
+              }}
+            />
+            <button onClick={() => setVoteCount(voteCount + 1)}>Skip</button>
+            {voteCount}
+            <button onClick={() => {setJoin(false); setHost(false); setChosen(false)}}>go back</button>
+          </div>
+        :
+          ''
+        }
+
+        {amHost ? 
+          <div>
+            HOST TRUE
+            <Login />
+            <div><Player accessToken={accessToken} trackUri={playingTrack?.uri}/></div>
+            <button onClick={() => {setJoin(false); setHost(false); setChosen(false)}}>go back</button>
+          </div>
+        :
+          ''
+        }
+
+        {
+          haveChosen ?
+          ''
+          :
+          <div className='chosingDiv'>
+            <div className='skipperTitleDiv'>
+              <div className='skipperTitle'>
+                skipper
+              </div>
+            </div>
+            <div className='amHostDiv'>
+              {amHost ? 'I am HOsting' : <div className='hostDivBtn' onClick={() => {setHost(!amHost); setJoin(false); setChosen(true)}}>Host</div>}
+            </div>
+            <div className='amJoinDiv'>
+              {amJoin ? 'I am Joinging' : <div className='joinDivBtn' onClick={() => {setJoin(!amJoin); setHost(false); setChosen(true)}}>Join</div>}
+            </div>
+          </div>
+        }
       </div>
-      <div><Player accessToken={accessToken} trackUri={playingTrack?.uri}/></div>
     </div>
   );
 }
+        //<div>
+        //  <button onClick={sendMessage}> send message</button>
+        //  {test}
+        //</div>
+
         //<BasicTitle code={code}></BasicTitle>
         //<button><a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`}>Host</a></button>
 

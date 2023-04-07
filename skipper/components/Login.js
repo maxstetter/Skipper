@@ -11,7 +11,7 @@ function Login(){
         <div>
             <a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`}>
                 <button className="main_button">
-                        Host
+                        Login
                 </button>
             </a>
         </div>

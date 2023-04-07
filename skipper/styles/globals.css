@@ -6,6 +6,7 @@
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+  font-family: "Lucida Console", "Courier New", monospace;
 }
 
 html,
@@ -20,7 +21,7 @@ a {
 }
 
 .Content {
-  padding: 5px;
+  padding: none;
 }
 
 .main_button {
@@ -64,4 +65,89 @@ a {
 
 .trackinfo {
   margin-left: 10px;
+}
+
+.amHostDiv {
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  width: 100vw;
+  background-color: #1DB954;
+}
+.amJoinDiv {
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  width: 100vw;
+  background-color: #00CDFE
+}
+
+.chosingDiv {
+  background-color: black;
+  height: 100vh;
+  width: 100vw;
+}
+
+.hostDivBtn {
+  font-weight: bold;
+  display: inherit;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  color: white;
+  font-size: 40px;
+  opacity: 0.9;
+  position: relative;
+  z-index: 1;
+}
+
+.joinDivBtn {
+  font-weight: bold;
+  display: inherit;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  color: white;
+  font-size: 40px;
+  opacity: 0.9;
+  position: relative;
+  z-index: 1;
+}
+
+.hostDivBtn:hover {
+  transition: 0.3s;
+  background-color: darkgreen;
+}
+
+.joinDivBtn:hover {
+  transition: 0.3s;
+  background-color: #1484CD;
+}
+
+.skipperTitleDiv {
+  height: 100%;
+  width: 100%;
+  font-weight: bold;
+  font-size: 90px;
+  z-index: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  position: absolute;
+}
+
+.skipperTitle {
+  background-color: black;
+  opacity: 0.85;
+  z-index: 9;
+  position: absolute;
 }
