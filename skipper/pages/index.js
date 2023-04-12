@@ -8,12 +8,85 @@ import useAuth from '@/hooks/useAuth';
 import TrackSearchResult from '@/components/TrackSearchResult';
 import Player from '@/components/Player';
 import Login from '@/components/Login';
+import genRoom from '@/hooks/genRoom';
 
 let socket
+// pckg variables
+
+let pckg_vote_count, pckg_current_song_artists, pckg_current_song_name, pckg_current_song_cover, pckg_vote_threshold, pckg_queue
 
 const spotifyApi = new SpotifyWebApi({
   clientId: '8600f707689e46bd9426b2afd625d379',
 })
+
+
+
+// TODO:
+
+// Figure out Room stuff: current issue is state objects will not save when altered by socket message.
+// SOLUTION ^ use the correct way to set a state variable.
+// Display certain stuff to guests.
+// Style guest page.
+
+// Update guest: host  --info->  guest.
+// Request host for new information.
+
+// current issue is that current song is undefined when loading. 
+// possible solution is to update on the queued songs, when queue changes, update everything else.
+// still need to make request update.
+
+//TODO: need to rework update and request update logic. Current problem
+// is 1: need to identify who(host) sends the update. 2: How to get socket
+// to talk back and forth (send request --> get request --> send update).
+
+// #2 SOLUTION: sockets talking kind of. search for 'doggishtoast'. Improve by checking how 'room' is sent..
+// #1 POSSIBLE: use accessToken to identify host. For some reason it doesnt think the host has a token...
+
+
+// TODO: 
+// 1: Auto update clients from host. (whenever vital info changes, send update [useEffect]).
+// 1 NOTE: on client connection, send them an update.
+
+// 2: Display updated info in client view (On package receive, update my local values).
+// 2 NOTE: How to package queue?
+
+// 3: create confirm room and threshold pop up for host (Use pop up div. Used to set room and threshold.)
+// 3 NOTE: ideally room should be set automatically and threshold can be changed.
+
+// 4: How to determine who is host to send updates. see above TODO.
+// 4 NOTE: only host sends updates. only clients request updates.
+
+// 5: Style client view
+// 5 NOTE: get rid of leftover stuff. Make look nice
+
+// 6: Host: How to show current user's playlists / which playlist to play on load?
+// 6 NOTE: currently hardcoded own playlist. Ability to select playlist?
+
+// 7: Deploy server
+// 7 NOTE: buy domain, probably use Github to host. maybe AWS if easy.
+
+// WOULD BE NICE 
+// - Ability to request songs.
+// - Message of the day.
+// - Vote on queued songs.
+// - Regulate votes (only 1 vote per user per song).
+// - Ability to add songs to playlist.
+// - Search song adds to queue instead of auto play.
+
+
+// How do I know when my song has changed?
+// ^ SOLUTION: check song duration, set delay to this duration for a refresh function 
+// that will simply check for a current song by using previous way once delay is done.
+// ^^ SOLUTION OR: make guest request an update every specified period. ( might be easier bc websocket)
+// duration = res->body->item->duration_ms
+
+// When first being host, how do i set current song? Maybe async function?
+
+function Delay(milliseconds){
+  return new Promise(resolve => {
+    setTimeout(resolve, milliseconds);
+  });
+}
 
 function HomePage() {
     
@@ -26,10 +99,27 @@ function HomePage() {
 
     useEffect(() => {
       if (!accessToken) return
+      let username
       spotifyApi.setAccessToken(accessToken);
+      spotifyApi.getMe().then( res => {
+        username = res?.body?.display_name
+        setwhoami(whoami => username)
+        //console.log('whoami: ', whoami)
+      });
+
+//      spotifyApi.getMyCurrentPlayingTrack().then( res => {
+//        console.log('request for current song: ', res)
+//        current_song_name = res?.body?.item?.name
+//        console.log('current_song_name: ', current_song_name);
+//        setCurrentSong(currentSong => current_song_name);
+//      })
+
+
       console.log('playlists: ', spotifyApi.getUserPlaylists(spotifyApi.getMe().id))
       console.log('user info: ', spotifyApi.getMe())
       console.log('saved tracks: ', spotifyApi.getMySavedTracks({ limit: 50}))
+      //setRoom(genRoom())
+      // update guests?
     }, [accessToken])
 
 
@@ -44,17 +134,17 @@ function HomePage() {
 
       let cancel = false
       spotifyApi.searchTracks(search).then(res => {
-        setSearchResults(res.body.tracks.items.map(track => {
+        setSearchResults(res?.body?.tracks?.items.map(track => {
           if (cancel) return 
-          const smallestAlbumImage = track.album.images.reduce((smallest, image) => {
+          const smallestAlbumImage = track?.album?.images.reduce((smallest, image) => {
             if (image.height < smallest.height) return image
             return smallest
-          }, track.album.images[0])
+          }, track?.album?.images[0])
           return {
-            artist: track.artists[0].name,
-            title: track.name,
-            uri: track.uri,
-            albumUrl: smallestAlbumImage.url,
+            artist: track.artists[0]?.name,
+            title: track?.name,
+            uri: track?.uri,
+            albumUrl: smallestAlbumImage?.url,
           }
         }))
       })
@@ -87,12 +177,45 @@ function HomePage() {
       socket = io();
 
       socket.on('connect', () => {
-        console.log('socket connected')
+        console.log('Socket connected.');
       })
 
       socket.on('receiveMessage', (data) => {
         console.log('data: ', data);
         setTester(data.message);
+      })
+
+      socket.on('receiveVote', (data) => {
+        //console.log('Vote: ', data);
+        //console.log('message: ', test)
+        setVoteCount( (voteCount) => voteCount + 1);
+      })
+
+      socket.on('receiveUpdate', (data) => {
+        console.log(`Received an update: ${JSON.stringify(data)}`)
+        setVoteCount((voteCount) => data?.pckg?.current_vote);
+        setVoteThreshold((voteThreshold) => data?.pckg?.current_vote_threshold);
+        setCurrentSongName((currentSongName) => data?.pckg?.current_song_name);
+        setCurrentSongArtists((currentSongArtists) => data?.pckg?.current_song_artists);
+        setCurrentSongCover((currentSongCover) => data?.pckg?.current_song_cover);
+      })
+      
+      socket.on('receiveUpdateRequest', (data) => {
+        // console.log(`Received an update request: `, data)
+        // update based on host
+        if(!accessToken) {
+          let room = data?.room;
+          console.log('received update request with: ', data)
+          console.log('current vote count: ', voteCount);
+          let pckg = {
+            current_song_name: pckg_current_song_name,
+            current_song_artists: pckg_current_song_artists,
+            current_song_cover: pckg_current_song_cover,
+            current_vote: pckg_vote_count,
+            current_vote_threshold: pckg_vote_threshold,
+          }
+          socket.emit('sendUpdate', { pckg, room})
+        }
       })
     }
 
@@ -101,20 +224,82 @@ function HomePage() {
       socket.emit('sendMessage', { message, room });
     };
 
+    const sendVote = () => {
+      let vote = '1';
+      socket.emit('sendVote', { vote, room });
+    };
 
+    const sendUpdate = () => {
+      console.log('sending an update')
+      if (socket && accessToken) {
+        spotifyApi.getMyCurrentPlayingTrack().then( res => {
+          console.log('request for current song: ', res)
+          const smallestAlbumImage = res?.body?.item?.album?.images.reduce((smallest, image) => {
+            if (image.height < smallest.height) return image
+            return smallest
+          }, res?.body?.item?.album?.images[0])
+          //console.log('smallest image url', smallestAlbumImage.url);
+          setCurrentSongName(currentSongName => res?.body?.item?.name);
+          setCurrentSongArtists(currentSongArtists => res?.body?.item?.album?.artists);
+          setCurrentSongCover(currentSongCover => smallestAlbumImage.url);
+        })
 
+      }
+      
+
+      let pckg = {
+        current_song_name: pckg_current_song_name,
+        current_song_artists: pckg_current_song_artists,
+        current_song_cover: pckg_current_song_cover,
+        current_vote: pckg_vote_count,
+        current_vote_threshold: pckg_vote_threshold,
+      }
+
+      socket.emit('sendUpdate', { pckg, room })
+    };
+
+    const sendUpdateRequest = () => {
+      let message = `${socket.id} requests an update.`
+      socket.emit('sendUpdateRequest', { message, room })
+    }
+
+    
     // Vote stuff //
     
     const [voteCount, setVoteCount] = useState(0)
     const [voteThreshold, setVoteThreshold] = useState(5) // set vote threshold here
 
-
     useEffect(() => {
+      pckg_vote_count = voteCount
+      console.log(`${pckg_vote_count} pcgk vote count`)
       if (voteCount > voteThreshold) {
         setVoteCount(0)
-        spotifyApi.skipToNext();
+        if (accessToken){
+          spotifyApi.skipToNext().then( async () => {
+            await Delay(1500);
+            spotifyApi.getMyCurrentPlayingTrack().then( res => {
+              const smallestAlbumImage = res?.body?.item?.album?.images.reduce((smallest, image) => {
+                if (image.height < smallest.height) return image
+                return smallest
+              }, res?.body?.item?.album?.images[0])
+              setCurrentSongName(currentSongName => res?.body?.item?.name);
+              setCurrentSongArtists(currentSongArtists => res?.body?.item?.album?.artists);
+              setCurrentSongCover(currentSongCover => smallestAlbumImage.url);
+            })
+          });
+        }
       } 
+      if (socket && accessToken) {
+        sendUpdate()
+      }
     },[voteCount])
+
+    useEffect(() => {
+      pckg_vote_threshold = voteThreshold;
+      if (socket && accessToken) {
+        sendUpdate()
+      }
+    },[voteThreshold])
 
 
     // Room Stuff //
@@ -124,6 +309,8 @@ function HomePage() {
     const joinRoom = () => {
       if (room !== '') {
         socket.emit('joinRoom', room);
+        let message = `${socket.id} requests an update.`
+        socket.emit('sendUpdateRequest', { message, room })
       }
     };
 
@@ -133,12 +320,61 @@ function HomePage() {
     const [amHost, setHost] = useState(false);
     const [amJoin, setJoin] = useState(false);
 
+    
+    // Update stuff //
+    const [whoami, setwhoami] = useState();
+    const [currentSongName, setCurrentSongName] = useState();
+    const [currentSongArtists, setCurrentSongArtists] = useState();
+    const [currentSongCover, setCurrentSongCover] = useState();
+    const [queue, setQueue] = useState();
+
+    useEffect(() => {
+      //if(!accessToken) return
+      console.log(`new current name ${currentSongName}`)
+      pckg_current_song_name = currentSongName;
+      pckg_current_song_artists = currentSongArtists;
+      pckg_current_song_cover = currentSongCover;
+      if (socket && accessToken) {
+        sendUpdate()
+      }
+
+    },[currentSongName, currentSongCover])
+
+
+
+    useEffect(() => {
+      //console.log('new whoami:', whoami)
+    },[whoami])
+
 
 
   return (
     <div className='Content'>
         {accessToken ? 
           <div className='container'>
+            <div className='topHalfDiv'>
+              <button onClick={joinRoom}>Join a Room</button>
+              <input
+                placeholder='Room ID...'
+                onChange={(event) => {
+                  setRoom(event.target.value);
+                }}
+              />
+              <button onClick={sendUpdate}>UPDATE</button>
+              {currentSongName}
+              <div className='infoDiv'>
+                <div className='skipInfoDiv'>
+                  Skip Votes: {voteCount}
+                </div>
+                <div className='roomInfoDiv'>
+                  Room ID: {room}
+                </div>
+              </div>
+              <div className='playerDiv'>
+                <Player accessToken={accessToken} trackUri={playingTrack?.uri}/>
+              </div>
+              {whoami}
+            </div>
             <form className='searchcontainer'>
               <input className='searchbar'
                 type="text"
@@ -156,61 +392,64 @@ function HomePage() {
           :
           ''
         }
-      <div>
-        {amJoin ? 
-          <div>
-            <button onClick={joinRoom}>Join a Room</button>
-            <input
-              placeholder='Room ID...'
-              onChange={(event) => {
-                setRoom(event.target.value);
-              }}
-            />
-            <button onClick={() => setVoteCount(voteCount + 1)}>Skip</button>
-            {voteCount}
-            <button onClick={() => {setJoin(false); setHost(false); setChosen(false)}}>go back</button>
-          </div>
-        :
-          ''
-        }
-
-        {amHost ? 
-          <div>
-            HOST TRUE
-            <Login />
-            <div><Player accessToken={accessToken} trackUri={playingTrack?.uri}/></div>
-            <button onClick={() => {setJoin(false); setHost(false); setChosen(false)}}>go back</button>
-          </div>
-        :
-          ''
-        }
-
-        {
-          haveChosen ?
-          ''
-          :
-          <div className='chosingDiv'>
-            <div className='skipperTitleDiv'>
-              <div className='skipperTitle'>
-                skipper
+      {accessToken ? 
+        ''
+      :
+        <div>
+          {amJoin ? 
+            <div>
+              <button onClick={joinRoom}>Join a Room</button>
+              <input
+                placeholder='Room ID...'
+                onChange={(event) => {
+                  setRoom(event.target.value);
+                }}
+              />
+              <button onClick={() => {setVoteCount(voteCount + 1), sendVote()}}>Skip</button>
+              {voteCount}
+              <button onClick={() => {setJoin(false); setHost(false); setChosen(false)}}>go back</button>
+              <div>
+                <button onClick={sendMessage}> send message</button>
+                {test}
+                <button onClick={sendUpdateRequest}> Request Update</button>
               </div>
             </div>
-            <div className='amHostDiv'>
-              {amHost ? 'I am HOsting' : <div className='hostDivBtn' onClick={() => {setHost(!amHost); setJoin(false); setChosen(true)}}>Host</div>}
+          :
+            ''
+          }
+
+          {amHost ? 
+            <div className='hostDiv'>
+              <Login />
+              <button className='host_back_button' onClick={() => {setJoin(false); setHost(false); setChosen(false)}}>go back</button>
             </div>
-            <div className='amJoinDiv'>
-              {amJoin ? 'I am Joinging' : <div className='joinDivBtn' onClick={() => {setJoin(!amJoin); setHost(false); setChosen(true)}}>Join</div>}
+          :
+            ''
+          }
+
+          {
+            haveChosen ?
+            ''
+            :
+            <div className='chosingDiv'>
+              <div className='skipperTitleDiv'>
+                <div className='skipperTitle'>
+                  skipper
+                </div>
+              </div>
+              <div className='amHostDiv'>
+                {amHost ? '' : <div className='hostDivBtn' onClick={() => {setHost(!amHost); setJoin(false); setChosen(true);}}>Host</div>}
+              </div>
+              <div className='amJoinDiv'>
+                {amJoin ? '' : <div className='joinDivBtn' onClick={() => {setJoin(!amJoin); setHost(false); setChosen(true)}}>Join</div>}
+              </div>
             </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
     </div>
   );
 }
-        //<div>
-        //  <button onClick={sendMessage}> send message</button>
-        //  {test}
-        //</div>
 
         //<BasicTitle code={code}></BasicTitle>
         //<button><a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`}>Host</a></button>

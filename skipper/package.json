@@ -23,7 +23,8 @@
     "socket.io": "^4.6.1",
     "socket.io-client": "^4.6.1",
     "spotify-web-api-node": "^5.0.2",
-    "tls": "^0.0.1"
+    "tls": "^0.0.1",
+    "uuidv4": "^6.2.13"
   },
   "devDependencies": {
     "webpack": "^5.77.0"
