@@ -9,6 +9,8 @@ import TrackSearchResult from '@/components/TrackSearchResult';
 import Player from '@/components/Player';
 import Login from '@/components/Login';
 import genRoom from '@/hooks/genRoom';
+import CurrentCard from '@/components/CurrentCard';
+import CurrentVote from '@/components/CurrentVote';
 
 let socket
 // pckg variables
@@ -87,6 +89,7 @@ function Delay(milliseconds){
     setTimeout(resolve, milliseconds);
   });
 }
+
 
 function HomePage() {
     
@@ -202,8 +205,8 @@ function HomePage() {
       
       socket.on('receiveUpdateRequest', (data) => {
         // console.log(`Received an update request: `, data)
-        // update based on host
-        if(!accessToken) {
+        if(spotifyApi.getAccessToken()) {
+          HitSpotifyApi();
           let room = data?.room;
           console.log('received update request with: ', data)
           console.log('current vote count: ', voteCount);
@@ -232,17 +235,18 @@ function HomePage() {
     const sendUpdate = () => {
       console.log('sending an update')
       if (socket && accessToken) {
-        spotifyApi.getMyCurrentPlayingTrack().then( res => {
-          console.log('request for current song: ', res)
-          const smallestAlbumImage = res?.body?.item?.album?.images.reduce((smallest, image) => {
-            if (image.height < smallest.height) return image
-            return smallest
-          }, res?.body?.item?.album?.images[0])
-          //console.log('smallest image url', smallestAlbumImage.url);
-          setCurrentSongName(currentSongName => res?.body?.item?.name);
-          setCurrentSongArtists(currentSongArtists => res?.body?.item?.album?.artists);
-          setCurrentSongCover(currentSongCover => smallestAlbumImage.url);
-        })
+        HitSpotifyApi();
+       // spotifyApi.getMyCurrentPlayingTrack().then( res => {
+       //   console.log('request for current song: ', res)
+       //   const smallestAlbumImage = res?.body?.item?.album?.images.reduce((smallest, image) => {
+       //     if (image.height < smallest.height) return image
+       //     return smallest
+       //   }, res?.body?.item?.album?.images[0])
+       //   //console.log('smallest image url', smallestAlbumImage.url);
+       //   setCurrentSongName(currentSongName => res?.body?.item?.name);
+       //   setCurrentSongArtists(currentSongArtists => res?.body?.item?.album?.artists);
+       //   setCurrentSongCover(currentSongCover => smallestAlbumImage.url);
+       // })
 
       }
       
@@ -277,15 +281,16 @@ function HomePage() {
         if (accessToken){
           spotifyApi.skipToNext().then( async () => {
             await Delay(1500);
-            spotifyApi.getMyCurrentPlayingTrack().then( res => {
-              const smallestAlbumImage = res?.body?.item?.album?.images.reduce((smallest, image) => {
-                if (image.height < smallest.height) return image
-                return smallest
-              }, res?.body?.item?.album?.images[0])
-              setCurrentSongName(currentSongName => res?.body?.item?.name);
-              setCurrentSongArtists(currentSongArtists => res?.body?.item?.album?.artists);
-              setCurrentSongCover(currentSongCover => smallestAlbumImage.url);
-            })
+            HitSpotifyApi();
+           // spotifyApi.getMyCurrentPlayingTrack().then( res => {
+           //   const smallestAlbumImage = res?.body?.item?.album?.images.reduce((smallest, image) => {
+           //     if (image.height < smallest.height) return image
+           //     return smallest
+           //   }, res?.body?.item?.album?.images[0])
+           //   setCurrentSongName(currentSongName => res?.body?.item?.name);
+           //   setCurrentSongArtists(currentSongArtists => res?.body?.item?.album?.artists);
+           //   setCurrentSongCover(currentSongCover => smallestAlbumImage.url);
+           // })
           });
         }
       } 
@@ -340,6 +345,23 @@ function HomePage() {
 
     },[currentSongName, currentSongCover])
 
+    function HitSpotifyApi(){
+      spotifyApi.getMyCurrentPlayingTrack().then( res => {
+        console.log('Hit spotifyApi: ', res);
+        const smallestAlbumImage = res?.body?.item?.album?.images.reduce((smallest, image) => {
+          if (image.height < smallest.height) return image
+          return smallest
+        }, res?.body?.item?.album?.images[0])
+
+        let artists = []
+        res?.body?.item?.artists.map((artist) => {
+          return artists.push(artist.name)
+        })
+        setCurrentSongName(currentSongName => res?.body?.item?.name);
+        setCurrentSongArtists(currentSongArtists => artists);
+        setCurrentSongCover(currentSongCover => smallestAlbumImage.url);
+      })
+    };
 
 
     useEffect(() => {
@@ -397,21 +419,35 @@ function HomePage() {
       :
         <div>
           {amJoin ? 
-            <div>
-              <button onClick={joinRoom}>Join a Room</button>
-              <input
-                placeholder='Room ID...'
-                onChange={(event) => {
-                  setRoom(event.target.value);
-                }}
-              />
-              <button onClick={() => {setVoteCount(voteCount + 1), sendVote()}}>Skip</button>
-              {voteCount}
-              <button onClick={() => {setJoin(false); setHost(false); setChosen(false)}}>go back</button>
-              <div>
-                <button onClick={sendMessage}> send message</button>
-                {test}
-                <button onClick={sendUpdateRequest}> Request Update</button>
+            <div className='guestDiv'>
+              <div className='guestRoomDiv'>
+                <input
+                  className='guestRoomInput'
+                  placeholder='Room ID...'
+                  onChange={(event) => {
+                    setRoom(event.target.value);
+                  }}
+                />
+                <button className='joinRoomBtn' onClick={joinRoom}>
+                  <span className='joinRoomBtnFront'>Join</span>
+                </button>
+                <div>
+                  Room:
+                  <br/>
+                  {room}
+                </div>
+              </div>
+              <div className='guestVoteDiv'>
+                <CurrentVote count={voteCount} threshold={voteThreshold}/>
+                <button className='skipBtn' onClick={() => {setVoteCount(voteCount + 1), sendVote()}}>
+                  <span className='skipBtnFront'>Skip</span>
+                </button>
+              </div>
+              <CurrentCard song_title={currentSongName} song_artists={currentSongArtists} song_cover={currentSongCover}/>
+              <div className='goBackDiv'>
+                <button className='goBackBtn' onClick={() => {setJoin(false); setHost(false); setChosen(false)}}>
+                  <span className='goBackBtnFront'>go back</span>
+                </button>
               </div>
             </div>
           :
@@ -454,4 +490,10 @@ function HomePage() {
         //<BasicTitle code={code}></BasicTitle>
         //<button><a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`}>Host</a></button>
 
+        // This was in the amjoin section.
+        //      <div>
+        //        <button onClick={sendMessage}> send message</button>
+        //        {test}
+        //        <button onClick={sendUpdateRequest}> Request Update</button>
+        //      </div>
 export default HomePage

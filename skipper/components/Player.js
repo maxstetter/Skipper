@@ -17,6 +17,8 @@ function Player({ accessToken, trackUri}) {
         console.log('nextTracks: ', state.nextTracks)
     }}
     play={true}
+    // Instead of hard coded playlist, have a list of available playlists.
+    // Similar to the trackUri set up, except with playlist uris.
     uris={trackUri ? [trackUri] : ["spotify:playlist:7lMK6wzrVhd98gizttAlaK"]}
     />
 }
