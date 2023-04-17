@@ -2,7 +2,7 @@ import React from "react";
 
 export default function CurrentCard({song_title, song_artists, song_cover}){
     if (song_artists) {
-        var artists = song_artists.map(artist => { return (<span>{artist} </span>)})
+        var artists = song_artists.map((artist) => { return (<span key={artist}>{artist} </span>)})
     }
 return (
     <div className="CurrentCard">

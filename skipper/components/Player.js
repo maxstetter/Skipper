@@ -19,7 +19,7 @@ function Player({ accessToken, trackUri}) {
     play={true}
     // Instead of hard coded playlist, have a list of available playlists.
     // Similar to the trackUri set up, except with playlist uris.
-    uris={trackUri ? [trackUri] : ["spotify:playlist:7lMK6wzrVhd98gizttAlaK"]}
+    uris={trackUri ? [trackUri] : []}
     />
 }
 

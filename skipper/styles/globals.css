@@ -184,7 +184,6 @@ a {
 
 .topHalfDiv {
   margin: 5px;
-  background-color: red;
 }
 
 .infoDiv {
@@ -242,6 +241,7 @@ a {
   font-weight: bold;
   background-color: #00CDFE;
   display: flex;
+  padding: 10px;
 }
 
 .skipBtn {
@@ -250,6 +250,7 @@ a {
   margin: 3px;
   margin-top: 7px;
   width: 50%;
+  max-width: 200px;
   background: #8B4000;
   cursor: pointer;
   border-radius: 12px;
@@ -279,6 +280,8 @@ a {
   background-color: orange;
   height: 70px;
   padding: 5px;
+  padding-bottom: 7px;
+  padding-top: 7px;
 }
 .joinRoomBtn {
   font-weight: bold;
@@ -287,6 +290,7 @@ a {
   margin-left: 10px;
   margin-right: 10px;
   width: 50%;
+  max-width: 200px;
   background: #1484CD;
   cursor: pointer;
   border-radius: 12px;
@@ -309,10 +313,12 @@ a {
 }
 
 .guestRoomInput {
-  width: 25%;
+  width: 30%;
+  max-width: 250px;
   border-radius: 12px;
   padding: 5px;
   font-size: 15px;
+  height: 100%;
 }
 
 .goBackBtn {
@@ -322,6 +328,7 @@ a {
   margin-left: 10px;
   margin-right: 10px;
   width: 40%;
+  max-width: 200px;
   cursor: pointer;
   background: hsl(340deg 100% 32%);
   border-radius: 12px;
@@ -346,4 +353,102 @@ a {
 .goBackDiv {
   display: flex;
   justify-content: center;
+}
+
+.displayRoomDiv {
+  display: flexbox;
+  align-items: right;
+  margin-left: 10px;
+  margin-right: 7px;
+}
+
+.guestInputJoinDiv {
+  height: 100%;
+  width: 100%;
+}
+
+.HostPopUp {
+  font-weight: bold;
+  font-size: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  background: lightgrey;
+  position: fixed;
+  z-index: 1;
+  height: 30%;
+  width: 95%;
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid black;
+  border-radius: 12px;
+  opacity: 0.98;
+}
+
+.HostPopUp button {
+  justify-content: center;
+}
+
+.popRoomIdDiv {
+  display: flex;
+  justify-content: center;
+  margin: 10px;
+  flex-direction: column;
+}
+
+.popRoomIdDiv input {
+  width: 100px;
+  font-size: 15px;
+  padding: 5px;
+  margin: 5px;
+  border-radius: 8px;
+}
+
+.popThresholdDiv {
+  margin: 10px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.popThresholdDiv input {
+  width: 50px;
+  font-size: 15px;
+  margin: 5px;
+  padding: 5px;
+  border-radius: 8px;
+}
+
+.startBtn {
+  font-weight: bold;
+  font-size: 25px;
+  margin: 3px;
+  margin-left: 10px;
+  margin-right: 10px;
+  width: 40%;
+  max-width: 200px;
+  cursor: pointer;
+  background: darkgreen;
+  border-radius: 12px;
+  padding: 0;
+  outline-offset: 4px;
+}
+
+.startBtnFront {
+  display: block;
+  background: var(--green);
+  padding: 6px 26px;
+  border-radius: 12px;
+  font-size: 1rem;
+  color: white;
+  transform: translateY(-6px); 
+}
+
+.goBackBtn:active .goBackBtnFront {
+  transform: translateY(-2px);
+}
+
+.playlistResult {
+  display: flex;
+  margin: 5px;
+  padding: 5px;
 }

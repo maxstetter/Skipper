@@ -6,11 +6,14 @@ import io from 'socket.io-client';
 import SpotifyWebApi from 'spotify-web-api-node';
 import useAuth from '@/hooks/useAuth';
 import TrackSearchResult from '@/components/TrackSearchResult';
+import PlaylistResult from '@/components/PlaylistResult';
 import Player from '@/components/Player';
 import Login from '@/components/Login';
 import genRoom from '@/hooks/genRoom';
 import CurrentCard from '@/components/CurrentCard';
 import CurrentVote from '@/components/CurrentVote';
+import { useInterval } from '@/utils/Poller';
+import axios from 'axios';
 
 let socket
 // pckg variables
@@ -84,6 +87,18 @@ const spotifyApi = new SpotifyWebApi({
 
 // When first being host, how do i set current song? Maybe async function?
 
+// Final TODO:
+// 1. DONE (could use work) confirmation pop up for host to set room and vote threshold
+// 2. display playlists list for host instead of hard coded
+// 3. polling system. IE: On song change, reset vote count.
+
+// OPTIONS: 
+// 1. display only user playlists. pagination. 
+// 2. keep song search. add song to queue on click instead of auto play. Add song requests.
+
+// FINAL THING FOR MVP:
+// - Create a function that polls. HitSpotiyApi every ___ seconds.
+
 function Delay(milliseconds){
   return new Promise(resolve => {
     setTimeout(resolve, milliseconds);
@@ -92,7 +107,7 @@ function Delay(milliseconds){
 
 
 function HomePage() {
-    
+  
     // Token stuff //
     
     const searchParams = useSearchParams();
@@ -118,7 +133,7 @@ function HomePage() {
 //      })
 
 
-      console.log('playlists: ', spotifyApi.getUserPlaylists(spotifyApi.getMe().id))
+      console.log('Playlists: ', spotifyApi.getUserPlaylists(spotifyApi.getMe().id))
       console.log('user info: ', spotifyApi.getMe())
       console.log('saved tracks: ', spotifyApi.getMySavedTracks({ limit: 50}))
       //setRoom(genRoom())
@@ -159,6 +174,37 @@ function HomePage() {
     // Player stuff //
 
     const [playingTrack, setPlayingTrack] = useState()
+    const [userPlaylists, setUserPlaylists] = useState([])
+
+    useEffect(() => {
+      if (!accessToken) return
+      
+      spotifyApi.getUserPlaylists(spotifyApi.getMe().id, {limit: 50})
+    //  axios.get('https://api.spotify.com/v1/me/playlists?limit=50', {
+    //    headers: { Authorization: `Bearer ${spotifyApi.getAccessToken()}`  }
+    //  })
+      .then(res => {
+        console.log('playlist res: ', res)
+        setUserPlaylists(res?.body?.items.map(playlist => {
+          const smallestPlaylistImage = playlist?.images.reduce((smallest, image) => {
+            if (image.height < smallest.height) return image
+            return smallest
+          }, playlist?.images[0])
+          return {
+            title: playlist?.name,
+            uri: playlist?.uri,
+            playlistUrl: smallestPlaylistImage?.url,
+          }
+        }))
+      })
+      console.log('playlists: ', userPlaylists)
+
+    }, [accessToken])
+    
+    // choosePlaylist piggy backs off of chooseTrack/playingTrack
+    function choosePlaylist(playlist) {
+      setPlayingTrack(playlist)
+    }
 
     function chooseTrack(track) {
       setPlayingTrack(track)
@@ -276,7 +322,7 @@ function HomePage() {
     useEffect(() => {
       pckg_vote_count = voteCount
       console.log(`${pckg_vote_count} pcgk vote count`)
-      if (voteCount > voteThreshold) {
+      if (voteCount >= voteThreshold) {
         setVoteCount(0)
         if (accessToken){
           spotifyApi.skipToNext().then( async () => {
@@ -324,6 +370,35 @@ function HomePage() {
     const [haveChosen, setChosen] = useState(false);
     const [amHost, setHost] = useState(false);
     const [amJoin, setJoin] = useState(false);
+    const [popUp, setPopUp] = useState(true);
+
+    function HostPopUp(){
+      return (
+        <div className='HostPopUp'>
+          <div className='popRoomIdDiv'>
+            Enter a room ID:
+            <input
+              placeholder='Room ID...'
+              onChange={(event) => {
+                setRoom(event.target.value);
+              }}
+            />
+          </div>
+          <div className='popThresholdDiv'>
+            Enter the vote skip threshold:
+            <input
+              placeholder='ex:5'
+              onChange={(event) => {
+                setVoteThreshold(event.target.value)
+              }}
+            />
+          </div>
+          <button className='startBtn' onClick={() => {setPopUp(false); joinRoom()}}>
+            <span className='startBtnFront'>Start</span>
+          </button>
+        </div>
+      )
+    }
 
     
     // Update stuff //
@@ -331,11 +406,13 @@ function HomePage() {
     const [currentSongName, setCurrentSongName] = useState();
     const [currentSongArtists, setCurrentSongArtists] = useState();
     const [currentSongCover, setCurrentSongCover] = useState();
+    const [currentSongId, setCurrentSongId] = useState();
+    const [previousSongId, setPreviousSongId] = useState();
     const [queue, setQueue] = useState();
 
     useEffect(() => {
       //if(!accessToken) return
-      console.log(`new current name ${currentSongName}`)
+      //console.log(`new current name ${currentSongName}`)
       pckg_current_song_name = currentSongName;
       pckg_current_song_artists = currentSongArtists;
       pckg_current_song_cover = currentSongCover;
@@ -357,9 +434,24 @@ function HomePage() {
         res?.body?.item?.artists.map((artist) => {
           return artists.push(artist.name)
         })
+        
+        // First time init of current song
+        if(!previousSongId) {
+          setPreviousSongId(previousSongId => res?.body?.item?.id)
+          setCurrentSongId(currentSongId => res?.body?.item?.id)
+        }
+
+        if(previousSongId !== currentSongId) {
+          console.log('new song!')
+          setPreviousSongId(previousSongId => currentSongId);
+          setVoteCount(voteCount => 0);
+        }
+        console.log('previousSong: ',previousSongId);
+        console.log('currentSong: ',currentSongId);
+        setCurrentSongId(currentSongId => res?.body?.item?.id);
         setCurrentSongName(currentSongName => res?.body?.item?.name);
         setCurrentSongArtists(currentSongArtists => artists);
-        setCurrentSongCover(currentSongCover => smallestAlbumImage.url);
+        setCurrentSongCover(currentSongCover => smallestAlbumImage?.url);
       })
     };
 
@@ -368,25 +460,25 @@ function HomePage() {
       //console.log('new whoami:', whoami)
     },[whoami])
 
+      useInterval(() => {
+        if(spotifyApi.getAccessToken()){
+          console.log('poop')
+          HitSpotifyApi();
+        }
+      }, 1000 * 5)
 
+
+    // Main return //
 
   return (
     <div className='Content'>
         {accessToken ? 
           <div className='container'>
+            {popUp ? HostPopUp() : ''}
             <div className='topHalfDiv'>
-              <button onClick={joinRoom}>Join a Room</button>
-              <input
-                placeholder='Room ID...'
-                onChange={(event) => {
-                  setRoom(event.target.value);
-                }}
-              />
-              <button onClick={sendUpdate}>UPDATE</button>
-              {currentSongName}
               <div className='infoDiv'>
                 <div className='skipInfoDiv'>
-                  Skip Votes: {voteCount}
+                  Votes to Skip: {voteCount}/{voteThreshold}
                 </div>
                 <div className='roomInfoDiv'>
                   Room ID: {room}
@@ -395,7 +487,12 @@ function HomePage() {
               <div className='playerDiv'>
                 <Player accessToken={accessToken} trackUri={playingTrack?.uri}/>
               </div>
-              {whoami}
+              <div>
+                {userPlaylists.map(playlist => {
+                  return (<PlaylistResult playlist={playlist} key={playlist?.uri} choosePlaylist={choosePlaylist}/>)
+                  
+                })}
+              </div>
             </div>
             <form className='searchcontainer'>
               <input className='searchbar'
@@ -421,17 +518,19 @@ function HomePage() {
           {amJoin ? 
             <div className='guestDiv'>
               <div className='guestRoomDiv'>
-                <input
-                  className='guestRoomInput'
-                  placeholder='Room ID...'
-                  onChange={(event) => {
-                    setRoom(event.target.value);
-                  }}
-                />
-                <button className='joinRoomBtn' onClick={joinRoom}>
-                  <span className='joinRoomBtnFront'>Join</span>
-                </button>
-                <div>
+                <div className='guestInputJoinDiv'>
+                  <input
+                    className='guestRoomInput'
+                    placeholder='Room ID...'
+                    onChange={(event) => {
+                      setRoom(event.target.value);
+                    }}
+                  />
+                  <button className='joinRoomBtn' onClick={joinRoom}>
+                    <span className='joinRoomBtnFront'>Join</span>
+                  </button>
+                </div>
+                <div className='displayRoomDiv'>
                   Room:
                   <br/>
                   {room}
@@ -440,7 +539,7 @@ function HomePage() {
               <div className='guestVoteDiv'>
                 <CurrentVote count={voteCount} threshold={voteThreshold}/>
                 <button className='skipBtn' onClick={() => {setVoteCount(voteCount + 1), sendVote()}}>
-                  <span className='skipBtnFront'>Skip</span>
+                  <span className='skipBtnFront'>Skip!</span>
                 </button>
               </div>
               <CurrentCard song_title={currentSongName} song_artists={currentSongArtists} song_cover={currentSongCover}/>
