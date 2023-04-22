@@ -216,11 +216,9 @@ function HomePage() {
 
     const [test, setTester] = useState('being');
 
-   // useEffect(() => {
-   //   socketInitializer();
-   // }, [])
-    
-    socketInitializer();
+    useEffect(() => {
+      socketInitializer();
+    }, [])
 
     const socketInitializer = async () => {
       await fetch('/api/socket');

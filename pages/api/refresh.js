@@ -1,5 +1,6 @@
 const SpotifyWebApi = require('spotify-web-api-node');
 const URL = 'https://skipp-er.herokuapp.com/'
+//const URL = 'http://localhost:3000'
 
 /* 
 FUNCTIONALITY:
