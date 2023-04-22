@@ -11,7 +11,7 @@ export default function useAuth(code) {
 
     useEffect(() => {
         //axios.post('http://localhost:3000/api/login', {
-        axios.post(`${URL}/api/login`, {
+        axios.post(`${URL}api/login`, {
             code,
         })
         .then(res => {
