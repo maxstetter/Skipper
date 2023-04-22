@@ -23,18 +23,19 @@ export default function handler(req, res) {
         clientId: '8600f707689e46bd9426b2afd625d379',
         clientSecret: 'f30da561b7894a9abc84375defae71eb',
     })
-
-    spotifyApi.authorizationCodeGrant(code)
-    .then(data => {
-        return(
+    return new Promise((resolve, reject) => {
+        spotifyApi.authorizationCodeGrant(code)
+        .then(data => {
             res.json({
                 accessToken: data.body.access_token,
                 refreshToken: data.body.refresh_token,
                 expiresIn: data.body.expires_in,
             })
-        )
-    }).catch(err => {
-        //console.log('Error: ', err);
-        return(res.status(400))
+            resolve();
+        }).catch(err => {
+            //console.log('Error: ', err);
+            res.status(400);
+            resolve();
+        })
     })
 }
