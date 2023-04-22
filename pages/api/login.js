@@ -26,13 +26,15 @@ export default function handler(req, res) {
 
     spotifyApi.authorizationCodeGrant(code)
     .then(data => {
-        res.json({
-            accessToken: data.body.access_token,
-            refreshToken: data.body.refresh_token,
-            expiresIn: data.body.expires_in,
-        })
+        return(
+            res.json({
+                accessToken: data.body.access_token,
+                refreshToken: data.body.refresh_token,
+                expiresIn: data.body.expires_in,
+            })
+        )
     }).catch(err => {
         //console.log('Error: ', err);
-        res.status(400);
+        return(res.status(400))
     })
 }
