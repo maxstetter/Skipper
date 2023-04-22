@@ -228,6 +228,10 @@ function HomePage() {
       socket.on('connect', () => {
         console.log('Socket connected.');
       })
+      
+      socket.on('connect_error', (err) => {
+        console.log(`connect_error due to ${err.message}`)
+      })
 
       socket.on('receiveMessage', (data) => {
         console.log('data: ', data);
