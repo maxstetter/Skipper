@@ -1,4 +1,5 @@
 const SpotifyWebApi = require('spotify-web-api-node');
+const URL = 'https://skipp-er.herokuapp.com/'
 
 /* 
 FUNCTIONALITY:
@@ -16,7 +17,7 @@ Returns tokens for other spotify api calls.
 export default function handler(req, res) {
     const code = req.body.code;
     const spotifyApi = new SpotifyWebApi({
-        redirectUri: 'https://skipp-er.herokuapp.com/',
+        redirectUri: URL,
         //redirectUri: 'http://localhost:3000',
         clientId: '8600f707689e46bd9426b2afd625d379',
         clientSecret: 'f30da561b7894a9abc84375defae71eb',
