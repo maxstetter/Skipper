@@ -223,6 +223,7 @@ function HomePage() {
         .catch((err) => {
           console.log('Error queuing: ', err)
         })
+        setSearch('');
       }
     }
 
