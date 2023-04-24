@@ -1,2 +1,7 @@
 # ingore node modules
 node_modules/
+
+# ignore next.js stuff
+/.next/
+/out/
+
