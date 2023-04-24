@@ -2,9 +2,9 @@
 import React from "react";
 
 
-function TrackSearchResult({ track, chooseTrack }){
+function TrackSearchResult({ track, queueTrack }){
     function handlePlay() {
-        chooseTrack(track)
+        queueTrack(track)
     }
 
     return(

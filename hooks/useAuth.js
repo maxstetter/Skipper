@@ -38,8 +38,9 @@ export default function useAuth(code) {
                 setAccessToken(res.data.accessToken);
                 setExpiresIn(res.data.expiresIn);
             })
-            .catch(() => {
-                window.location = "/";
+            .catch((err) => {
+                //window.location = "/";
+                console.log(`Error for api/refresh: ${err}`)
             })
         }, (expiresIn - 60) * 1000)
         return () => clearInterval(interval);

@@ -211,6 +211,21 @@ function HomePage() {
       setSearch('')
     }
 
+    function queueTrack(track) {
+      if (spotifyApi.getAccessToken()) {
+        const queue_url = `https://api.spotify.com/v1/me/player/queue?uri=${track?.uri}`
+        axios.post(queue_url, null, {
+          headers: { Authorization: `Bearer ${spotifyApi.getAccessToken()}`  },
+        })
+        .then((res) => {
+          console.log('Queue response: ', res);
+        })
+        .catch((err) => {
+          console.log('Error queuing: ', err)
+        })
+      }
+    }
+
 
     // Socket Stuff //
 
@@ -450,8 +465,8 @@ function HomePage() {
           setPreviousSongId(previousSongId => currentSongId);
           setVoteCount(voteCount => 0);
         }
-        console.log('previousSong: ',previousSongId);
-        console.log('currentSong: ',currentSongId);
+        //console.log('previousSong: ',previousSongId);
+        //console.log('currentSong: ',currentSongId);
         setCurrentSongId(currentSongId => res?.body?.item?.id);
         setCurrentSongName(currentSongName => res?.body?.item?.name);
         setCurrentSongArtists(currentSongArtists => artists);
@@ -466,7 +481,6 @@ function HomePage() {
 
       useInterval(() => {
         if(spotifyApi.getAccessToken()){
-          console.log('poop')
           HitSpotifyApi();
         }
       }, 1000 * 5)
@@ -508,7 +522,7 @@ function HomePage() {
             </form>
             <div className="flex-grow-1 my-2" style={{overflowY: "auto"}}>
               {searchResults.map( track => (
-                <TrackSearchResult track={track} key={track?.uri} chooseTrack={chooseTrack} />
+                <TrackSearchResult track={track} key={track?.uri} queueTrack={queueTrack} />
               ))}
             </div>
           </div>
