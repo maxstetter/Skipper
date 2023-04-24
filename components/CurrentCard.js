@@ -1,3 +1,5 @@
+// CurrentCard.js
+
 import React from "react";
 
 export default function CurrentCard({song_title, song_artists, song_cover}){

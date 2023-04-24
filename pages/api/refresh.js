@@ -1,3 +1,5 @@
+// refresh.js
+
 const SpotifyWebApi = require('spotify-web-api-node');
 const URL = 'https://skipp-er.herokuapp.com/'
 //const URL = 'http://localhost:3000'
@@ -14,7 +16,6 @@ Returns tokens for other spotify api calls.
 */
  
 
-//TODO: remove secret from github repo.
 export default function handler(req, res) {
     const refreshToken = req.body.refreshToken;
     const spotifyApi = new SpotifyWebApi({
@@ -30,7 +31,6 @@ export default function handler(req, res) {
         console.log('The access token has been refreshed!');
         //console.log('refreshed: ', data.body);
         res.json({
-            // Possible bug here. should be: data.body.access_token and data.body.expires_in
             accessToken: data?.body?.accessToken,
             expiresIn: data?.body?.expiresIn,
         })

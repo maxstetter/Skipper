@@ -1,10 +1,10 @@
+// socket.js
+
 import { Server } from 'socket.io';
 
 function SocketHandler(req, res){
     if (res.socket.server.io) {
         console.log('Socket is already running...');
-        
-        //res.end() // Get rid of this later
     } else {
         console.log('Socket is initializing...');
         const io = new Server(res.socket.server)
@@ -21,7 +21,6 @@ function SocketHandler(req, res){
             socket.on('joinRoom', (data) => {
                 socket.join(data);
                 console.log(`${socket.id} joined room ${data}`);
-                //socket.to(data).emit('receiveJoinRoom', data);
             });
 
             socket.on('sendVote', (data) => {
@@ -42,12 +41,6 @@ function SocketHandler(req, res){
         });
 
     }
-
-    // const io = new Server(res.socket.server)
-    // res.socket.server.io = io
-
-
-
     res.end();
 }
 

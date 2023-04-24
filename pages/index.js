@@ -24,81 +24,6 @@ const spotifyApi = new SpotifyWebApi({
   clientId: '8600f707689e46bd9426b2afd625d379',
 })
 
-
-
-// TODO:
-
-// Figure out Room stuff: current issue is state objects will not save when altered by socket message.
-// SOLUTION ^ use the correct way to set a state variable.
-// Display certain stuff to guests.
-// Style guest page.
-
-// Update guest: host  --info->  guest.
-// Request host for new information.
-
-// current issue is that current song is undefined when loading. 
-// possible solution is to update on the queued songs, when queue changes, update everything else.
-// still need to make request update.
-
-//TODO: need to rework update and request update logic. Current problem
-// is 1: need to identify who(host) sends the update. 2: How to get socket
-// to talk back and forth (send request --> get request --> send update).
-
-// #2 SOLUTION: sockets talking kind of. search for 'doggishtoast'. Improve by checking how 'room' is sent..
-// #1 POSSIBLE: use accessToken to identify host. For some reason it doesnt think the host has a token...
-
-
-// TODO: 
-// 1: Auto update clients from host. (whenever vital info changes, send update [useEffect]).
-// 1 NOTE: on client connection, send them an update.
-
-// 2: Display updated info in client view (On package receive, update my local values).
-// 2 NOTE: How to package queue?
-
-// 3: create confirm room and threshold pop up for host (Use pop up div. Used to set room and threshold.)
-// 3 NOTE: ideally room should be set automatically and threshold can be changed.
-
-// 4: How to determine who is host to send updates. see above TODO.
-// 4 NOTE: only host sends updates. only clients request updates.
-
-// 5: Style client view
-// 5 NOTE: get rid of leftover stuff. Make look nice
-
-// 6: Host: How to show current user's playlists / which playlist to play on load?
-// 6 NOTE: currently hardcoded own playlist. Ability to select playlist?
-
-// 7: Deploy server
-// 7 NOTE: buy domain, probably use Github to host. maybe AWS if easy.
-
-// WOULD BE NICE 
-// - Ability to request songs.
-// - Message of the day.
-// - Vote on queued songs.
-// - Regulate votes (only 1 vote per user per song).
-// - Ability to add songs to playlist.
-// - Search song adds to queue instead of auto play.
-
-
-// How do I know when my song has changed?
-// ^ SOLUTION: check song duration, set delay to this duration for a refresh function 
-// that will simply check for a current song by using previous way once delay is done.
-// ^^ SOLUTION OR: make guest request an update every specified period. ( might be easier bc websocket)
-// duration = res->body->item->duration_ms
-
-// When first being host, how do i set current song? Maybe async function?
-
-// Final TODO:
-// 1. DONE (could use work) confirmation pop up for host to set room and vote threshold
-// 2. display playlists list for host instead of hard coded
-// 3. polling system. IE: On song change, reset vote count.
-
-// OPTIONS: 
-// 1. display only user playlists. pagination. 
-// 2. keep song search. add song to queue on click instead of auto play. Add song requests.
-
-// FINAL THING FOR MVP:
-// - Create a function that polls. HitSpotiyApi every ___ seconds.
-
 function Delay(milliseconds){
   return new Promise(resolve => {
     setTimeout(resolve, milliseconds);
@@ -122,22 +47,12 @@ function HomePage() {
       spotifyApi.getMe().then( res => {
         username = res?.body?.display_name
         setwhoami(whoami => username)
-        //console.log('whoami: ', whoami)
       });
-
-//      spotifyApi.getMyCurrentPlayingTrack().then( res => {
-//        console.log('request for current song: ', res)
-//        current_song_name = res?.body?.item?.name
-//        console.log('current_song_name: ', current_song_name);
-//        setCurrentSong(currentSong => current_song_name);
-//      })
 
 
       console.log('Playlists: ', spotifyApi.getUserPlaylists(spotifyApi.getMe().id))
       console.log('user info: ', spotifyApi.getMe())
       console.log('saved tracks: ', spotifyApi.getMySavedTracks({ limit: 50}))
-      //setRoom(genRoom())
-      // update guests?
     }, [accessToken])
 
 
@@ -180,9 +95,6 @@ function HomePage() {
       if (!accessToken) return
       
       spotifyApi.getUserPlaylists(spotifyApi.getMe().id, {limit: 50})
-    //  axios.get('https://api.spotify.com/v1/me/playlists?limit=50', {
-    //    headers: { Authorization: `Bearer ${spotifyApi.getAccessToken()}`  }
-    //  })
       .then(res => {
         console.log('playlist res: ', res)
         setUserPlaylists(res?.body?.items.map(playlist => {
@@ -302,20 +214,7 @@ function HomePage() {
       console.log('sending an update')
       if (socket && accessToken) {
         HitSpotifyApi();
-       // spotifyApi.getMyCurrentPlayingTrack().then( res => {
-       //   console.log('request for current song: ', res)
-       //   const smallestAlbumImage = res?.body?.item?.album?.images.reduce((smallest, image) => {
-       //     if (image.height < smallest.height) return image
-       //     return smallest
-       //   }, res?.body?.item?.album?.images[0])
-       //   //console.log('smallest image url', smallestAlbumImage.url);
-       //   setCurrentSongName(currentSongName => res?.body?.item?.name);
-       //   setCurrentSongArtists(currentSongArtists => res?.body?.item?.album?.artists);
-       //   setCurrentSongCover(currentSongCover => smallestAlbumImage.url);
-       // })
-
       }
-      
 
       let pckg = {
         current_song_name: pckg_current_song_name,
@@ -337,7 +236,7 @@ function HomePage() {
     // Vote stuff //
     
     const [voteCount, setVoteCount] = useState(0);
-    const [voteThreshold, setVoteThreshold] = useState(5); // set vote threshold here
+    const [voteThreshold, setVoteThreshold] = useState(5);
     const [disabledBtn, setDisabledBtn] = useState(false);
 
     useEffect(() => {
@@ -349,15 +248,6 @@ function HomePage() {
           spotifyApi.skipToNext().then( async () => {
             await Delay(1500);
             HitSpotifyApi();
-           // spotifyApi.getMyCurrentPlayingTrack().then( res => {
-           //   const smallestAlbumImage = res?.body?.item?.album?.images.reduce((smallest, image) => {
-           //     if (image.height < smallest.height) return image
-           //     return smallest
-           //   }, res?.body?.item?.album?.images[0])
-           //   setCurrentSongName(currentSongName => res?.body?.item?.name);
-           //   setCurrentSongArtists(currentSongArtists => res?.body?.item?.album?.artists);
-           //   setCurrentSongCover(currentSongCover => smallestAlbumImage.url);
-           // })
           });
         }
       } 
@@ -446,7 +336,6 @@ function HomePage() {
     const [queue, setQueue] = useState();
 
     useEffect(() => {
-      //if(!accessToken) return
       //console.log(`new current name ${currentSongName}`)
       pckg_current_song_name = currentSongName;
       pckg_current_song_artists = currentSongArtists;
@@ -544,7 +433,6 @@ function HomePage() {
                 <div className='mainContainer'>
                   {userPlaylists.map(playlist => {
                     return (<PlaylistResult playlist={playlist} key={playlist?.uri} choosePlaylist={choosePlaylist}/>)
-                    
                   })}
                 </div>
               </div>
@@ -628,6 +516,92 @@ function HomePage() {
   );
 }
 
+export default HomePage
+
+
+
+
+// PERSONAL NOTES //
+
+
+
+// TODO:
+
+// Figure out Room stuff: current issue is state objects will not save when altered by socket message.
+// SOLUTION ^ use the correct way to set a state variable.
+// Display certain stuff to guests.
+// Style guest page.
+
+// Update guest: host  --info->  guest.
+// Request host for new information.
+
+// current issue is that current song is undefined when loading. 
+// possible solution is to update on the queued songs, when queue changes, update everything else.
+// still need to make request update.
+
+//TODO: need to rework update and request update logic. Current problem
+// is 1: need to identify who(host) sends the update. 2: How to get socket
+// to talk back and forth (send request --> get request --> send update).
+
+// #2 SOLUTION: sockets talking kind of. search for 'doggishtoast'. Improve by checking how 'room' is sent..
+// #1 POSSIBLE: use accessToken to identify host. For some reason it doesnt think the host has a token...
+
+
+// TODO: 
+// 1: Auto update clients from host. (whenever vital info changes, send update [useEffect]).
+// 1 NOTE: on client connection, send them an update.
+
+// 2: Display updated info in client view (On package receive, update my local values).
+// 2 NOTE: How to package queue?
+
+// 3: create confirm room and threshold pop up for host (Use pop up div. Used to set room and threshold.)
+// 3 NOTE: ideally room should be set automatically and threshold can be changed.
+
+// 4: How to determine who is host to send updates. see above TODO.
+// 4 NOTE: only host sends updates. only clients request updates.
+
+// 5: Style client view
+// 5 NOTE: get rid of leftover stuff. Make look nice
+
+// 6: Host: How to show current user's playlists / which playlist to play on load?
+// 6 NOTE: currently hardcoded own playlist. Ability to select playlist?
+
+// 7: Deploy server
+// 7 NOTE: buy domain, probably use Github to host. maybe AWS if easy.
+
+// WOULD BE NICE 
+// - Ability to request songs.
+// - Message of the day.
+// - Vote on queued songs.
+// - Regulate votes (only 1 vote per user per song).
+// - Ability to add songs to playlist.
+// - Search song adds to queue instead of auto play.
+
+
+// How do I know when my song has changed?
+// ^ SOLUTION: check song duration, set delay to this duration for a refresh function 
+// that will simply check for a current song by using previous way once delay is done.
+// ^^ SOLUTION OR: make guest request an update every specified period. ( might be easier bc websocket)
+// duration = res->body->item->duration_ms
+
+// When first being host, how do i set current song? Maybe async function?
+
+// Final TODO:
+// 1. DONE (could use work) confirmation pop up for host to set room and vote threshold
+// 2. display playlists list for host instead of hard coded
+// 3. polling system. IE: On song change, reset vote count.
+
+// OPTIONS: 
+// 1. display only user playlists. pagination. 
+// 2. keep song search. add song to queue on click instead of auto play. Add song requests.
+
+// FINAL THING FOR MVP:
+// - Create a function that polls. HitSpotiyApi every ___ seconds.
+
+
+
+// EXTRA CODE // 
+
         //<BasicTitle code={code}></BasicTitle>
         //<button><a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`}>Host</a></button>
 
@@ -637,4 +611,3 @@ function HomePage() {
         //        {test}
         //        <button onClick={sendUpdateRequest}> Request Update</button>
         //      </div>
-export default HomePage

@@ -1,3 +1,5 @@
+// CurrentVote.js
+
 import React from "react";
 
 export default function CurrentVote({count, threshold}){
