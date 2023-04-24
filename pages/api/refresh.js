@@ -30,9 +30,9 @@ export default function handler(req, res) {
         console.log('The access token has been refreshed!');
         //console.log('refreshed: ', data.body);
         res.json({
-            // Possible bug here. should be: data.body.accessToken and data.body.expiresIn
-            accessToken: data.body.access_token,
-            expiresIn: data.body.expires_in,
+            // Possible bug here. should be: data.body.access_token and data.body.expires_in
+            accessToken: data?.body?.accessToken,
+            expiresIn: data?.body?.expiresIn,
         })
 
         // Save the access token so that it's used in future calls

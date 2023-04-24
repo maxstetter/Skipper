@@ -336,8 +336,9 @@ function HomePage() {
     
     // Vote stuff //
     
-    const [voteCount, setVoteCount] = useState(0)
-    const [voteThreshold, setVoteThreshold] = useState(5) // set vote threshold here
+    const [voteCount, setVoteCount] = useState(0);
+    const [voteThreshold, setVoteThreshold] = useState(5); // set vote threshold here
+    const [disabledBtn, setDisabledBtn] = useState(false);
 
     useEffect(() => {
       pckg_vote_count = voteCount
@@ -372,6 +373,12 @@ function HomePage() {
       }
     },[voteThreshold])
 
+    const skipCooldown = async () => {
+      setDisabledBtn(true);
+      await Delay(15000);
+      setDisabledBtn(false)
+    }
+
 
     // Room Stuff //
 
@@ -395,6 +402,14 @@ function HomePage() {
     function HostPopUp(){
       return (
         <div className='HostPopUp'>
+          <div className='Disclaimer'>
+            <h3>Disclaimer:</h3>
+            <p>
+              Spotify only allows accounts who are registered with the developer to
+              use applications in development mode. Therefore users will NOT be able 
+              to host Skipper sessions unless they are already registered to 'Skipper'.
+            </p>
+          </div>
           <div className='popRoomIdDiv'>
             Enter a room ID:
             <input
@@ -506,25 +521,33 @@ function HomePage() {
               <div className='playerDiv'>
                 <Player accessToken={accessToken} trackUri={playingTrack?.uri}/>
               </div>
-              <div>
-                {userPlaylists.map(playlist => {
-                  return (<PlaylistResult playlist={playlist} key={playlist?.uri} choosePlaylist={choosePlaylist}/>)
-                  
-                })}
+              <hr style={{margin: "15px"}}/>
+              <div className='mainCard'>
+                <form className='searchcontainer'>
+                  <input className='searchbar'
+                    type="text"
+                    placeholder='Search Tracks To Queue'
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </form>
+                <div className='mainContainer'>
+                  {searchResults.map( track => (
+                    <TrackSearchResult track={track} key={track?.uri} queueTrack={queueTrack} />
+                  ))}
+                </div>
               </div>
-            </div>
-            <form className='searchcontainer'>
-              <input className='searchbar'
-                type="text"
-                placeholder='Search Songs/Artists'
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </form>
-            <div className="flex-grow-1 my-2" style={{overflowY: "auto"}}>
-              {searchResults.map( track => (
-                <TrackSearchResult track={track} key={track?.uri} queueTrack={queueTrack} />
-              ))}
+              <div className='mainCard'>
+                <div className='mainCardTitle'>
+                  Your Playlists:
+                </div>
+                <div className='mainContainer'>
+                  {userPlaylists.map(playlist => {
+                    return (<PlaylistResult playlist={playlist} key={playlist?.uri} choosePlaylist={choosePlaylist}/>)
+                    
+                  })}
+                </div>
+              </div>
             </div>
           </div>
           :
@@ -557,7 +580,7 @@ function HomePage() {
               </div>
               <div className='guestVoteDiv'>
                 <CurrentVote count={voteCount} threshold={voteThreshold}/>
-                <button className='skipBtn' onClick={() => {setVoteCount(voteCount + 1), sendVote()}}>
+                <button className='skipBtn' onClick={() => {setVoteCount(voteCount + 1), sendVote(), skipCooldown()}} disabled={disabledBtn}>
                   <span className='skipBtnFront'>Skip!</span>
                 </button>
               </div>

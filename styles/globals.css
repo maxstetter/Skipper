@@ -272,6 +272,16 @@ a {
   transform: translateY(-2px);
 }
 
+.skipBtn:disabled {
+  transform: translateY(-2px);
+}
+
+.skipBtn:disabled .skipBtnFront {
+  transform: translateY(-2px);
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+
 .guestRoomDiv {
   font-size: 25px;
   font-weight: bold;
@@ -375,7 +385,7 @@ a {
   background: lightgrey;
   position: fixed;
   z-index: 1;
-  height: 30%;
+  height: fit-content;
   width: 95%;
   margin: 10px;
   padding: 10px;
@@ -387,6 +397,12 @@ a {
 .HostPopUp button {
   justify-content: center;
 }
+
+.Disclaimer {
+  font-size: 1.0rem;
+  font-weight: light;
+}
+
 
 .popRoomIdDiv {
   display: flex;
@@ -450,5 +466,62 @@ a {
 .playlistResult {
   display: flex;
   margin: 5px;
+  padding: 5px;
+}
+
+.mainCard {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  transition: 0.3s;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.mainCard:hover {
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+}
+
+.mainContainer {
+  padding: 2px 16px;
+  max-height: 400px;
+  overflow-y: scroll;
+}
+
+.mainCardTitle {
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.25rem;
+  border-bottom: 5px solid;
+  border-bottom-style: ridge;
+}
+
+.trackSearchResultCard {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  transition: 0.3s;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.trackSearchResultCard:hover {
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+}
+
+.tracksearchresultContainer {
+  padding: 5px;
+}
+
+.playlistResultCard {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  transition: 0.3s;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.playlistResultCard:hover {
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+}
+
+.playlistResultContainer {
   padding: 5px;
 }
