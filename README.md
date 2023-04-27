@@ -10,4 +10,4 @@ Skipper is a music management system that was designed for the gym. As a gym goe
 
 ## Links:
 - [Deployment](https://skipp-er.herokuapp.com/)
-- TBD: [Youtube](https://www.youtube.com/)
+- [Youtube](https://www.youtube.com/channel/UCpfl-T9iPPrs6PtpcMWDrvA)
